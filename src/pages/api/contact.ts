@@ -1,9 +1,10 @@
 
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
     try {
         const body = await request.json();
 
@@ -13,15 +14,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const category = typeof body.category === "string" ? body.category.trim() : "";
         const message = typeof body.message === "string" ? body.message.trim() : "";
 
-        // Validate required fields
         if (!name || !email || !category || !message) {
-            return new Response(
-                JSON.stringify({ success: false, message: "Please fill in all required fields." }),
-                { status: 400, headers: { "Content-Type": "application/json" } }
+            return Response.json(
+                { success: false, message: "Please fill in all required fields." },
+                { status: 400 }
             );
         }
 
-        // Validate field lengths
         if (
             name.length > 100 ||
             email.length > 254 ||
@@ -29,28 +28,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
             category.length > 100 ||
             message.length > 5000
         ) {
-            return new Response(
-                JSON.stringify({ success: false, message: "One or more fields exceed the allowed length." }),
-                { status: 400, headers: { "Content-Type": "application/json" } }
+            return Response.json(
+                { success: false, message: "One or more fields exceed the allowed length." },
+                { status: 400 }
             );
         }
 
-        // Basic email validation
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailPattern.test(email)) {
-            return new Response(
-                JSON.stringify({ success: false, message: "Please enter a valid email address." }),
-                { status: 400, headers: { "Content-Type": "application/json" } }
+            return Response.json(
+                { success: false, message: "Please enter a valid email address." },
+                { status: 400 }
             );
         }
 
-        // Access Cloudflare D1
-        const db = (locals as any).runtime.env.DB;
-
-        if (!db) {
-            throw new Error("D1 database binding is unavailable.");
-        }
+        // Astro 6: Access Cloudflare bindings directly.
+        const db = env.DB;
 
         const id = crypto.randomUUID();
 
@@ -62,29 +56,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
             .bind(id, name, email, company || null, category, message)
             .run();
 
-        return new Response(
-            JSON.stringify({
+        return Response.json(
+            {
                 success: true,
                 message: "Your message has been sent successfully."
-            }),
-            {
-                status: 201,
-                headers: { "Content-Type": "application/json" }
-            }
+            },
+            { status: 201 }
         );
 
     } catch (error) {
         console.error("Contact API error:", error);
 
-        return new Response(
-            JSON.stringify({
+        return Response.json(
+            {
                 success: false,
                 message: "Unable to send your message right now. Please try again later."
-            }),
-            {
-                status: 500,
-                headers: { "Content-Type": "application/json" }
-            }
+            },
+            { status: 500 }
         );
     }
 };
