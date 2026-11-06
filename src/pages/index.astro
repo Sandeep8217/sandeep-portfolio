@@ -1,16 +1,37 @@
+
 ---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/layout/Navbar.tsx";
+import Hero from "../components/sections/Hero.tsx";
+import About from "../components/sections/About.tsx";
+import Experience from "../components/sections/Experience.tsx";
+import Skills from "../components/sections/Skills.tsx";
+import Projects from "../components/sections/Projects.tsx";
+import Education from "../components/sections/Education.tsx";
+import LeetCode from "../components/sections/LeetCode.tsx";
+import GitHub from "../components/sections/GitHub.tsx";
+import Courses from "../components/sections/Courses.tsx";
+import Resume from "../components/sections/Resume.tsx";
+import Contact from "../components/sections/Contact.tsx";
+import Footer from "../components/layout/Footer.tsx";
+import LoadingScreen from "../components/ui/LoadingScreen.tsx";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout>
+<LoadingScreen client:load />
+  <Navbar client:load />
+  <main>
+    <Hero client:load />
+    <About />
+    <Experience />
+    <Skills />
+    <Projects />
+    <LeetCode />
+    <GitHub />
+    <Courses />
+    <Resume />
+    <Contact client:load />
+    <Education />
+  </main>
+  <Footer />
+</Layout>
