@@ -9,30 +9,41 @@ import {
     ExternalLink,
 } from "lucide-react";
 
+const INITIAL_FORM = {
+    name: "",
+    email: "",
+    company: "",
+    category: "Recruitment / Job Opportunity",
+    message: "",
+};
+
 export default function Contact() {
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
-
-    const [form, setForm] = useState({
-        name: "",
-        email: "",
-        company: "",
-        category: "Recruitment / Job Opportunity",
-        message: "",
-    });
+    const [form, setForm] = useState(INITIAL_FORM);
 
     const handleChange = (
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        setForm({
-            ...form,
-            [event.target.name]: event.target.value,
-        });
+        const { name, value } = event.target;
+
+        setForm((previous) => ({
+            ...previous,
+            [name]: value,
+        }));
+
+        if (submitError) {
+            setSubmitError("");
+        }
     };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (
+        event: React.FormEvent<HTMLFormElement>
+    ) => {
         event.preventDefault();
+
+        if (isSubmitting) return;
 
         setIsSubmitting(true);
         setSubmitError("");
@@ -42,27 +53,28 @@ export default function Contact() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Accept": "application/json",
                 },
-                body: JSON.stringify(form),
+                body: JSON.stringify({
+                    name: form.name.trim(),
+                    email: form.email.trim(),
+                    company: form.company.trim(),
+                    category: form.category,
+                    message: form.message.trim(),
+                }),
             });
 
-            const result = await response.json();
+            const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result.success) {
+            if (!response.ok || !result?.success) {
                 throw new Error(
-                    result.message || "Unable to send your message."
+                    result?.message ||
+                    "Unable to send your message. Please try again."
                 );
             }
 
+            setForm(INITIAL_FORM);
             setSubmitted(true);
-
-            setForm({
-                name: "",
-                email: "",
-                company: "",
-                category: "Recruitment / Job Opportunity",
-                message: "",
-            });
 
         } catch (error) {
             setSubmitError(
@@ -78,6 +90,8 @@ export default function Contact() {
     return (
         <section id="contact" className="section-padding relative">
             <div className="container-custom">
+
+                {/* Section heading */}
                 <div className="mb-14 max-w-3xl">
                     <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-violet-400">
                         Get in touch
@@ -95,6 +109,7 @@ export default function Contact() {
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+
                     {/* Contact information */}
                     <div className="space-y-5">
                         <div className="glass-panel rounded-3xl p-7">
@@ -105,14 +120,16 @@ export default function Contact() {
                             <div className="mt-7 space-y-6">
                                 <a
                                     href="mailto:sandeepkarne126@gmail.com"
-                                    className="flex items-center gap-4 group"
+                                    className="group flex items-center gap-4"
                                 >
                                     <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-violet-300">
                                         <Mail size={21} />
                                     </div>
 
                                     <div>
-                                        <p className="text-xs text-gray-500">Email</p>
+                                        <p className="text-xs text-gray-500">
+                                            Email
+                                        </p>
                                         <p className="mt-1 break-all text-sm text-gray-200 transition-colors group-hover:text-violet-300">
                                             sandeepkarne126@gmail.com
                                         </p>
@@ -125,7 +142,9 @@ export default function Contact() {
                                     </div>
 
                                     <div>
-                                        <p className="text-xs text-gray-500">Location</p>
+                                        <p className="text-xs text-gray-500">
+                                            Location
+                                        </p>
                                         <p className="mt-1 text-sm text-gray-200">
                                             Bengaluru, Karnataka, India
                                         </p>
@@ -142,17 +161,17 @@ export default function Contact() {
                                     <a
                                         href="https://github.com/Sandeep8217"
                                         target="_blank"
-                                        rel="noreferrer"
+                                        rel="noopener noreferrer"
                                         aria-label="GitHub profile"
                                         className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-gray-300 transition-all hover:border-violet-400/30 hover:text-violet-300"
                                     >
-                                        <Code2Fallback />
+                                        <ExternalLink size={20} />
                                     </a>
 
                                     <a
                                         href="https://www.linkedin.com/in/sandeepkarne/"
                                         target="_blank"
-                                        rel="noreferrer"
+                                        rel="noopener noreferrer"
                                         aria-label="LinkedIn profile"
                                         className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 text-gray-300 transition-all hover:border-violet-400/30 hover:text-violet-300"
                                     >
@@ -181,6 +200,7 @@ export default function Contact() {
 
                     {/* Contact form */}
                     <div className="glass-panel rounded-3xl p-6 sm:p-8">
+
                         {submitted ? (
                             <div className="flex min-h-[450px] flex-col items-center justify-center text-center">
                                 <CheckCircle2
@@ -202,7 +222,7 @@ export default function Contact() {
                                     onClick={() => setSubmitted(false)}
                                     className="mt-7 rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-400/30"
                                 >
-                                    Back to contact form
+                                    Send another message
                                 </button>
                             </div>
                         ) : (
@@ -220,34 +240,45 @@ export default function Contact() {
                                     className="mt-7 space-y-5"
                                 >
                                     <div className="grid gap-5 sm:grid-cols-2">
+
                                         <div>
-                                            <label className="mb-2 block text-sm text-gray-300">
+                                            <label
+                                                htmlFor="contact-name"
+                                                className="mb-2 block text-sm text-gray-300"
+                                            >
                                                 Your name *
                                             </label>
 
                                             <input
+                                                id="contact-name"
                                                 name="name"
                                                 value={form.name}
                                                 onChange={handleChange}
                                                 required
                                                 maxLength={100}
+                                                autoComplete="name"
                                                 placeholder="John Doe"
                                                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="mb-2 block text-sm text-gray-300">
+                                            <label
+                                                htmlFor="contact-email"
+                                                className="mb-2 block text-sm text-gray-300"
+                                            >
                                                 Email address *
                                             </label>
 
                                             <input
+                                                id="contact-email"
                                                 type="email"
                                                 name="email"
                                                 value={form.email}
                                                 onChange={handleChange}
                                                 required
                                                 maxLength={254}
+                                                autoComplete="email"
                                                 placeholder="john@example.com"
                                                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                             />
@@ -255,26 +286,35 @@ export default function Contact() {
                                     </div>
 
                                     <div>
-                                        <label className="mb-2 block text-sm text-gray-300">
+                                        <label
+                                            htmlFor="contact-company"
+                                            className="mb-2 block text-sm text-gray-300"
+                                        >
                                             Company (optional)
                                         </label>
 
                                         <input
+                                            id="contact-company"
                                             name="company"
                                             value={form.company}
                                             onChange={handleChange}
                                             maxLength={150}
+                                            autoComplete="organization"
                                             placeholder="Company name"
                                             className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="mb-2 block text-sm text-gray-300">
+                                        <label
+                                            htmlFor="contact-category"
+                                            className="mb-2 block text-sm text-gray-300"
+                                        >
                                             Enquiry category *
                                         </label>
 
                                         <select
+                                            id="contact-category"
                                             name="category"
                                             value={form.category}
                                             onChange={handleChange}
@@ -289,11 +329,15 @@ export default function Contact() {
                                     </div>
 
                                     <div>
-                                        <label className="mb-2 block text-sm text-gray-300">
+                                        <label
+                                            htmlFor="contact-message"
+                                            className="mb-2 block text-sm text-gray-300"
+                                        >
                                             Your message *
                                         </label>
 
                                         <textarea
+                                            id="contact-message"
                                             name="message"
                                             value={form.message}
                                             onChange={handleChange}
@@ -303,6 +347,10 @@ export default function Contact() {
                                             placeholder="Tell me about your opportunity or idea..."
                                             className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                         />
+
+                                        <p className="mt-2 text-right text-xs text-gray-500">
+                                            {form.message.length}/5000
+                                        </p>
                                     </div>
 
                                     {submitError && (
@@ -320,7 +368,12 @@ export default function Contact() {
                                         className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Send size={17} />
-                                        {isSubmitting ? "Sending..." : "Send Message"}
+
+                                        {isSubmitting
+                                            ? "Sending..."
+                                            : "Send Message"
+                                        }
+
                                         {!isSubmitting && (
                                             <ArrowUpRight size={16} />
                                         )}
@@ -333,8 +386,4 @@ export default function Contact() {
             </div>
         </section>
     );
-}
-
-function Code2Fallback() {
-    return <ExternalLink size={20} />;
 }
