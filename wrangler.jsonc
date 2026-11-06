@@ -1,3 +1,4 @@
+
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"compatibility_date": "2026-11-01",
@@ -8,6 +9,13 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "portfolio-db",
+			"database_id": "cd9e4eac-9a78-467f-8e22-91ef044e9fad"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}

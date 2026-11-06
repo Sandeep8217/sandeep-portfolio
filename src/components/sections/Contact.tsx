@@ -11,6 +11,8 @@ import {
 
 export default function Contact() {
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
 
     const [form, setForm] = useState({
         name: "",
@@ -29,19 +31,48 @@ export default function Contact() {
         });
     };
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Temporary frontend-only submission.
-        // Backend integration will be added later.
-        setSubmitted(true);
-        setForm({
-            name: "",
-            email: "",
-            company: "",
-            category: "Recruitment / Job Opportunity",
-            message: "",
-        });
+        setIsSubmitting(true);
+        setSubmitError("");
+
+        try {
+            const response = await fetch("/api/contact", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message || "Unable to send your message."
+                );
+            }
+
+            setSubmitted(true);
+
+            setForm({
+                name: "",
+                email: "",
+                company: "",
+                category: "Recruitment / Job Opportunity",
+                message: "",
+            });
+
+        } catch (error) {
+            setSubmitError(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong. Please try again."
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -134,6 +165,7 @@ export default function Contact() {
                         <div className="rounded-3xl border border-emerald-400/15 bg-emerald-400/[0.04] p-6">
                             <div className="flex items-center gap-3">
                                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.7)]" />
+
                                 <p className="font-semibold text-emerald-300">
                                     Open to opportunities
                                 </p>
@@ -151,19 +183,22 @@ export default function Contact() {
                     <div className="glass-panel rounded-3xl p-6 sm:p-8">
                         {submitted ? (
                             <div className="flex min-h-[450px] flex-col items-center justify-center text-center">
-                                <CheckCircle2 size={54} className="text-emerald-400" />
+                                <CheckCircle2
+                                    size={54}
+                                    className="text-emerald-400"
+                                />
 
                                 <h3 className="mt-6 font-heading text-2xl font-bold text-white">
                                     Thank you for reaching out!
                                 </h3>
 
                                 <p className="mt-3 max-w-sm text-sm leading-7 text-gray-400">
-                                    This is a frontend preview. Your message has not
-                                    been sent yet. We'll activate actual delivery
-                                    when the backend is connected.
+                                    Your message has been received successfully.
+                                    I'll get back to you soon.
                                 </p>
 
                                 <button
+                                    type="button"
                                     onClick={() => setSubmitted(false)}
                                     className="mt-7 rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-400/30"
                                 >
@@ -180,7 +215,10 @@ export default function Contact() {
                                     Fill in the details below.
                                 </p>
 
-                                <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="mt-7 space-y-5"
+                                >
                                     <div className="grid gap-5 sm:grid-cols-2">
                                         <div>
                                             <label className="mb-2 block text-sm text-gray-300">
@@ -192,6 +230,7 @@ export default function Contact() {
                                                 value={form.name}
                                                 onChange={handleChange}
                                                 required
+                                                maxLength={100}
                                                 placeholder="John Doe"
                                                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                             />
@@ -208,6 +247,7 @@ export default function Contact() {
                                                 value={form.email}
                                                 onChange={handleChange}
                                                 required
+                                                maxLength={254}
                                                 placeholder="john@example.com"
                                                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                             />
@@ -223,6 +263,7 @@ export default function Contact() {
                                             name="company"
                                             value={form.company}
                                             onChange={handleChange}
+                                            maxLength={150}
                                             placeholder="Company name"
                                             className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                         />
@@ -237,6 +278,7 @@ export default function Contact() {
                                             name="category"
                                             value={form.category}
                                             onChange={handleChange}
+                                            required
                                             className="w-full rounded-xl border border-white/10 bg-[#111421] px-4 py-3 text-sm text-white outline-none focus:border-violet-400/50"
                                         >
                                             <option>Recruitment / Job Opportunity</option>
@@ -256,19 +298,32 @@ export default function Contact() {
                                             value={form.message}
                                             onChange={handleChange}
                                             required
+                                            maxLength={5000}
                                             rows={5}
                                             placeholder="Tell me about your opportunity or idea..."
                                             className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-gray-600 focus:border-violet-400/50"
                                         />
                                     </div>
 
+                                    {submitError && (
+                                        <p
+                                            role="alert"
+                                            className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300"
+                                        >
+                                            {submitError}
+                                        </p>
+                                    )}
+
                                     <button
                                         type="submit"
-                                        className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40"
+                                        disabled={isSubmitting}
+                                        className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Send size={17} />
-                                        Send Message
-                                        <ArrowUpRight size={16} />
+                                        {isSubmitting ? "Sending..." : "Send Message"}
+                                        {!isSubmitting && (
+                                            <ArrowUpRight size={16} />
+                                        )}
                                     </button>
                                 </form>
                             </>
