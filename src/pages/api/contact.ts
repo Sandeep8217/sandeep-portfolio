@@ -6,7 +6,7 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
     try {
-        const body = await request.json();
+        const body: Record<string, unknown> = await request.json();
 
         const name = typeof body.name === "string" ? body.name.trim() : "";
         const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";

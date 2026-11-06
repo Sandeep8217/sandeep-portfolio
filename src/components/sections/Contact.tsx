@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 import {
     Mail,
@@ -47,12 +47,27 @@ export default function Contact() {
                 body: JSON.stringify(form),
             });
 
-            const result = await response.json();
+            const result: unknown = await response.json();
 
-            if (!response.ok || !result.success) {
-                throw new Error(
-                    result.message || "Unable to send your message."
-                );
+            if (
+                !result ||
+                typeof result !== "object" ||
+                !("success" in result) ||
+                result.success !== true
+            ) {
+                const errorMessage =
+                    result &&
+                    typeof result === "object" &&
+                    "message" in result &&
+                    typeof result.message === "string"
+                        ? result.message
+                        : "Unable to send your message.";
+
+                throw new Error(errorMessage);
+            }
+
+            if (!response.ok) {
+                throw new Error("Unable to send your message.");
             }
 
             setSubmitted(true);
