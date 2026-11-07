@@ -57,7 +57,7 @@ export default function Projects() {
                         : "Something went wrong."
                 );
             } finally {
-                setLoading(true);
+                setLoading(false);
             }
         };
 
