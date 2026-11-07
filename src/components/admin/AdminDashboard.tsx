@@ -8,12 +8,15 @@ import {
     Settings,
     LogOut,
     Search,
-    Bell,
     ArrowUpRight,
     Inbox,
-    Menu,
     RefreshCw,
     AlertCircle,
+    Eye,
+    Trash2,
+    X,
+    Check,
+    Clock,
 } from "lucide-react";
 
 type ContactMessage = {
@@ -49,6 +52,9 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const [selectedMessage, setSelectedMessage] =
+        useState<ContactMessage | null>(null);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const loadDashboard = async () => {
         setLoading(true);
@@ -56,10 +62,7 @@ export default function AdminDashboard() {
 
         try {
             const response = await fetch("/api/admin/messages", {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                },
+                headers: { Accept: "application/json" },
                 cache: "no-store",
             });
 
@@ -90,6 +93,98 @@ export default function AdminDashboard() {
     useEffect(() => {
         void loadDashboard();
     }, []);
+
+    const updateMessageStatus = async (message: ContactMessage) => {
+        const newStatus = message.status === "NEW" ? "READ" : "NEW";
+
+        setActionLoading(true);
+        setError("");
+
+        try {
+            const response = await fetch(
+                `/api/admin/messages/${encodeURIComponent(message.id)}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                }
+            );
+
+            const result: unknown = await response.json();
+
+            if (
+                !response.ok ||
+                !result ||
+                typeof result !== "object" ||
+                !("success" in result) ||
+                result.success !== true
+            ) {
+                throw new Error("Unable to update message status.");
+            }
+
+            if (selectedMessage?.id === message.id) {
+                setSelectedMessage({
+                    ...message,
+                    status: newStatus,
+                });
+            }
+
+            await loadDashboard();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to update message."
+            );
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const deleteMessage = async (message: ContactMessage) => {
+        const confirmed = window.confirm(
+            `Are you sure you want to permanently delete the message from ${message.name}?`
+        );
+
+        if (!confirmed) return;
+
+        setActionLoading(true);
+        setError("");
+
+        try {
+            const response = await fetch(
+                `/api/admin/messages/${encodeURIComponent(message.id)}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            const result: unknown = await response.json();
+
+            if (
+                !response.ok ||
+                !result ||
+                typeof result !== "object" ||
+                !("success" in result) ||
+                result.success !== true
+            ) {
+                throw new Error("Unable to delete message.");
+            }
+
+            setSelectedMessage(null);
+            await loadDashboard();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to delete message."
+            );
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     const stats = [
         {
@@ -186,37 +281,27 @@ export default function AdminDashboard() {
                     </div>
                 </aside>
 
-                {/* Main Content */}
+                {/* Main */}
                 <section className="min-w-0 flex-1">
 
                     {/* Header */}
                     <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-[#0d0f19]/80 px-5 py-5 sm:px-8">
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                className="rounded-lg border border-white/10 p-2 text-gray-400 lg:hidden"
-                                aria-label="Menu"
-                            >
-                                <Menu size={20} />
-                            </button>
-
-                            <div>
-                                <h1 className="font-heading text-xl font-bold sm:text-2xl">
-                                    Dashboard Overview
-                                </h1>
-                                <p className="mt-1 text-xs text-gray-500 sm:text-sm">
-                                    Manage your portfolio from one place.
-                                </p>
-                            </div>
+                        <div>
+                            <h1 className="font-heading text-xl font-bold sm:text-2xl">
+                                Dashboard Overview
+                            </h1>
+                            <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                                Manage your portfolio from one place.
+                            </p>
                         </div>
 
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
                                 onClick={loadDashboard}
-                                disabled={loading}
+                                disabled={loading || actionLoading}
                                 aria-label="Refresh dashboard"
-                                className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-gray-400 transition-colors hover:text-white disabled:opacity-50"
+                                className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-gray-400 hover:text-white disabled:opacity-50"
                             >
                                 <RefreshCw
                                     size={18}
@@ -229,7 +314,9 @@ export default function AdminDashboard() {
                                     SK
                                 </div>
                                 <div className="hidden sm:block">
-                                    <p className="text-sm font-semibold">Administrator</p>
+                                    <p className="text-sm font-semibold">
+                                        Administrator
+                                    </p>
                                     <p className="text-xs text-gray-500">
                                         Portfolio Owner
                                     </p>
@@ -238,9 +325,9 @@ export default function AdminDashboard() {
                         </div>
                     </header>
 
-                    {/* Dashboard Body */}
                     <div className="p-5 sm:p-8">
 
+                        {/* Welcome */}
                         <div className="mb-8">
                             <p className="text-sm font-medium text-violet-400">
                                 ADMINISTRATION
@@ -255,13 +342,15 @@ export default function AdminDashboard() {
 
                         {/* Error */}
                         {error && (
-                            <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">
-                                <AlertCircle size={19} />
+                            <div
+                                role="alert"
+                                className="mb-6 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300"
+                            >
                                 {error}
                             </div>
                         )}
 
-                        {/* Statistics */}
+                        {/* Stats */}
                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             {stats.map((stat) => {
                                 const Icon = stat.icon;
@@ -269,7 +358,7 @@ export default function AdminDashboard() {
                                 return (
                                     <div
                                         key={stat.label}
-                                        className="rounded-2xl border border-white/10 bg-[#10121e] p-5 transition-colors hover:border-violet-500/30"
+                                        className="rounded-2xl border border-white/10 bg-[#10121e] p-5 hover:border-violet-500/30"
                                     >
                                         <div className="flex items-center justify-between">
                                             <p className="text-sm text-gray-400">
@@ -279,7 +368,6 @@ export default function AdminDashboard() {
                                                 <Icon size={19} />
                                             </div>
                                         </div>
-
                                         <p className="mt-5 text-3xl font-bold">
                                             {loading ? "..." : stat.value}
                                         </p>
@@ -296,7 +384,7 @@ export default function AdminDashboard() {
                                         Recent Messages
                                     </h3>
                                     <p className="mt-1 text-sm text-gray-500">
-                                        Your latest contact form submissions
+                                        Your latest contact submissions
                                     </p>
                                 </div>
 
@@ -313,38 +401,36 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[750px] text-left">
+                                <table className="w-full min-w-[850px] text-left">
                                     <thead className="bg-white/[0.02]">
                                     <tr className="text-xs uppercase tracking-wider text-gray-500">
                                         <th className="px-6 py-4 font-medium">Sender</th>
                                         <th className="px-6 py-4 font-medium">Category</th>
                                         <th className="px-6 py-4 font-medium">Date</th>
                                         <th className="px-6 py-4 font-medium">Status</th>
+                                        <th className="px-6 py-4 font-medium">Actions</th>
                                     </tr>
                                     </thead>
 
                                     <tbody className="divide-y divide-white/5">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-16 text-center text-sm text-gray-500">
+                                            <td colSpan={5} className="px-6 py-16 text-center text-sm text-gray-500">
                                                 Loading messages...
                                             </td>
                                         </tr>
                                     ) : filteredMessages.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-16 text-center">
+                                            <td colSpan={5} className="px-6 py-16 text-center">
                                                 <Inbox size={36} className="mx-auto text-gray-600" />
                                                 <p className="mt-4 font-semibold text-gray-300">
                                                     No messages found
-                                                </p>
-                                                <p className="mt-2 text-sm text-gray-500">
-                                                    Your contact submissions will appear here.
                                                 </p>
                                             </td>
                                         </tr>
                                     ) : (
                                         filteredMessages.map((message) => (
-                                            <tr key={message.id} className="transition-colors hover:bg-white/[0.02]">
+                                            <tr key={message.id} className="hover:bg-white/[0.02]">
                                                 <td className="px-6 py-5">
                                                     <p className="font-medium text-white">
                                                         {message.name}
@@ -371,6 +457,42 @@ export default function AdminDashboard() {
                                                             {message.status === "NEW" ? "Unread" : "Read"}
                                                         </span>
                                                 </td>
+
+                                                <td className="px-6 py-5">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedMessage(message)}
+                                                            title="View message"
+                                                            className="rounded-lg border border-white/10 p-2 text-gray-400 hover:border-violet-400/40 hover:text-violet-300"
+                                                        >
+                                                            <Eye size={16} />
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={actionLoading}
+                                                            onClick={() => void updateMessageStatus(message)}
+                                                            title={message.status === "NEW" ? "Mark as read" : "Mark as unread"}
+                                                            className="rounded-lg border border-white/10 p-2 text-gray-400 hover:border-emerald-400/40 hover:text-emerald-300 disabled:opacity-50"
+                                                        >
+                                                            {message.status === "NEW"
+                                                                ? <Check size={16} />
+                                                                : <Clock size={16} />
+                                                            }
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={actionLoading}
+                                                            onClick={() => void deleteMessage(message)}
+                                                            title="Delete message"
+                                                            className="rounded-lg border border-white/10 p-2 text-gray-400 hover:border-red-400/40 hover:text-red-300 disabled:opacity-50"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))
                                     )}
@@ -385,6 +507,116 @@ export default function AdminDashboard() {
                     </div>
                 </section>
             </div>
+
+            {/* Message Details Modal */}
+            {selectedMessage && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget && !actionLoading) {
+                            setSelectedMessage(null);
+                        }
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="message-modal-title"
+                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#10121e] p-6 shadow-2xl sm:p-8"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-violet-400">
+                                    Contact submission
+                                </p>
+                                <h3
+                                    id="message-modal-title"
+                                    className="mt-2 font-heading text-2xl font-bold"
+                                >
+                                    {selectedMessage.name}
+                                </h3>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setSelectedMessage(null)}
+                                disabled={actionLoading}
+                                aria-label="Close message"
+                                className="rounded-lg border border-white/10 p-2 text-gray-400 hover:text-white"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="mt-7 grid gap-5 sm:grid-cols-2">
+                            <div>
+                                <p className="text-xs text-gray-500">Email</p>
+                                <a
+                                    href={`mailto:${selectedMessage.email}`}
+                                    className="mt-2 block break-all text-sm text-violet-300 hover:text-violet-200"
+                                >
+                                    {selectedMessage.email}
+                                </a>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-gray-500">Company</p>
+                                <p className="mt-2 text-sm text-gray-200">
+                                    {selectedMessage.company || "Not provided"}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-gray-500">Category</p>
+                                <p className="mt-2 text-sm text-gray-200">
+                                    {selectedMessage.category}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-gray-500">Submitted</p>
+                                <p className="mt-2 text-sm text-gray-200">
+                                    {new Date(selectedMessage.created_at).toLocaleString("en-IN")}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-7 rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Message
+                            </p>
+                            <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-gray-200">
+                                {selectedMessage.message}
+                            </p>
+                        </div>
+
+                        <div className="mt-7 flex flex-wrap justify-end gap-3">
+                            <button
+                                type="button"
+                                disabled={actionLoading}
+                                onClick={() => void updateMessageStatus(selectedMessage)}
+                                className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-gray-200 hover:bg-white/5 disabled:opacity-50"
+                            >
+                                {selectedMessage.status === "NEW"
+                                    ? <Check size={16} />
+                                    : <Clock size={16} />
+                                }
+                                Mark as {selectedMessage.status === "NEW" ? "Read" : "Unread"}
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={actionLoading}
+                                onClick={() => void deleteMessage(selectedMessage)}
+                                className="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300 hover:bg-red-500/20 disabled:opacity-50"
+                            >
+                                <Trash2 size={16} />
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
