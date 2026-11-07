@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Menu, X, ArrowUpRight, Download } from "lucide-react";
+import { Menu, X, ArrowUpRight, Download, ShieldCheck } from "lucide-react";
 
 const navigation = [
     { label: "Home", href: "#home" },
@@ -22,7 +22,7 @@ export default function Navbar() {
     const closeMenu = () => setMenuOpen(false);
 
     return (
-        <header className="fixed left-0 right-0 top-0 z-[100] px-3 pt-3 sm:px-4 sm:pt-4 isolate">
+        <header className="fixed left-0 right-0 top-0 z-[100] isolate px-3 pt-3 sm:px-4 sm:pt-4">
             <nav className="mx-auto flex max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-[#10111f] px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl sm:px-5">
 
                 {/* Logo */}
@@ -59,16 +59,26 @@ export default function Navbar() {
                     ))}
                 </div>
 
-                {/* Desktop Resume Button */}
-                <a
-                    href="/resume.pdf"
-                    download
-                    className="hidden shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40 lg:flex"
-                >
-                    <Download size={15} />
-                    Resume
-                    <ArrowUpRight size={14} />
-                </a>
+                {/* Desktop Actions */}
+                <div className="hidden shrink-0 items-center gap-3 lg:flex">
+                    <a
+                        href="/admin"
+                        className="flex items-center gap-2 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5 text-sm font-semibold text-violet-300 transition-all hover:border-violet-400/60 hover:bg-violet-500/20"
+                    >
+                        <ShieldCheck size={15} />
+                        Admin Login
+                    </a>
+
+                    <a
+                        href="/resume.pdf"
+                        download
+                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:-translate-y-0.5 hover:shadow-violet-500/40"
+                    >
+                        <Download size={15} />
+                        Resume
+                        <ArrowUpRight size={14} />
+                    </a>
+                </div>
 
                 {/* Mobile Menu Button */}
                 <button
@@ -111,11 +121,23 @@ export default function Navbar() {
                         ))}
                     </div>
 
+                    {/* Mobile Admin Login */}
+                    <a
+                        href="/admin"
+                        onClick={closeMenu}
+                        className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-violet-400/30 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-300 transition-all hover:bg-violet-500/20"
+                    >
+                        <ShieldCheck size={17} />
+                        Admin Login
+                        <ArrowUpRight size={15} />
+                    </a>
+
+                    {/* Mobile Resume */}
                     <a
                         href="/resume.pdf"
                         download
                         onClick={closeMenu}
-                        className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+                        className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
                     >
                         <Download size={16} />
                         Download Resume
