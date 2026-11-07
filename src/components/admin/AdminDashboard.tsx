@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import Analytics from "./Analytics";
 import {
     LayoutDashboard,
     Mail,
@@ -55,6 +56,7 @@ export default function AdminDashboard() {
     const [selectedMessage, setSelectedMessage] =
         useState<ContactMessage | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("Overview");
 
     const loadDashboard = async () => {
         setLoading(true);
@@ -249,22 +251,28 @@ export default function AdminDashboard() {
                         </p>
 
                         <nav className="space-y-2">
-                            {menuItems.map((item, index) => {
+                            {menuItems.map((item) => {
                                 const Icon = item.icon;
+                                const isActive = activeTab === item.label;
 
                                 return (
-                                    <a
+                                    <button
                                         key={item.label}
-                                        href={index === 0 ? "/admin" : "#"}
-                                        className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
-                                            index === 0
+                                        type="button"
+                                        onClick={() => {
+                                            if (item.label === "Overview" || item.label === "Messages" || item.label === "Analytics") {
+                                                setActiveTab(item.label);
+                                            }
+                                        }}
+                                        className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition-colors ${
+                                            isActive
                                                 ? "border border-violet-500/20 bg-violet-500/10 font-semibold text-violet-300"
                                                 : "text-gray-400 hover:bg-white/5 hover:text-white"
                                         }`}
                                     >
                                         <Icon size={18} />
                                         {item.label}
-                                    </a>
+                                    </button>
                                 );
                             })}
                         </nav>
@@ -325,7 +333,12 @@ export default function AdminDashboard() {
                         </div>
                     </header>
 
-                    <div className="p-5 sm:p-8">
+                    {activeTab === "Analytics" ? (
+                        <div className="p-5 sm:p-8">
+                            <Analytics />
+                        </div>
+                    ) : (
+                        <div className="p-5 sm:p-8">
 
                         {/* Welcome */}
                         <div className="mb-8">
@@ -505,6 +518,7 @@ export default function AdminDashboard() {
                             Sandeep Karne Admin Console
                         </p>
                     </div>
+                    )}
                 </section>
             </div>
 
