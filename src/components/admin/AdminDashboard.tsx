@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import Analytics from "./Analytics";
+import ProjectsManager from "./ProjectsManager";
 import {
     LayoutDashboard,
     Mail,
@@ -17,7 +18,7 @@ import {
     Trash2,
     X,
     Check,
-    Clock,
+    Clock, FolderCode,
 } from "lucide-react";
 
 type ContactMessage = {
@@ -45,6 +46,7 @@ const menuItems = [
     { label: "Overview", icon: LayoutDashboard },
     { label: "Messages", icon: Mail },
     { label: "Analytics", icon: ArrowUpRight },
+    { label: "Projects", icon: FolderCode },
     { label: "Settings", icon: Settings },
 ];
 
@@ -260,7 +262,7 @@ export default function AdminDashboard() {
                                         key={item.label}
                                         type="button"
                                         onClick={() => {
-                                            if (item.label === "Overview" || item.label === "Messages" || item.label === "Analytics") {
+                                            if (["Overview", "Messages", "Analytics", "Projects"].includes(item.label)) {
                                                 setActiveTab(item.label);
                                             }
                                         }}
@@ -336,6 +338,10 @@ export default function AdminDashboard() {
                     {activeTab === "Analytics" ? (
                         <div className="p-5 sm:p-8">
                             <Analytics />
+                        </div>
+                    ) : activeTab === "Projects" ? (
+                        <div className="p-5 sm:p-8">
+                            <ProjectsManager />
                         </div>
                     ) : (
                         <div className="p-5 sm:p-8">
