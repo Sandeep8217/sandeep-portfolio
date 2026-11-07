@@ -18,7 +18,7 @@ import {
     Trash2,
     X,
     Check,
-    Clock, FolderCode,
+    Clock, FolderCode,Menu,
 } from "lucide-react";
 
 type ContactMessage = {
@@ -59,6 +59,7 @@ export default function AdminDashboard() {
         useState<ContactMessage | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("Overview");
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const loadDashboard = async () => {
         setLoading(true);
@@ -236,7 +237,22 @@ export default function AdminDashboard() {
             <div className="flex min-h-screen">
 
                 {/* Sidebar */}
-                <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-[#0d0f19] p-6 lg:flex lg:flex-col">
+                {/* Mobile sidebar backdrop */}
+                {mobileMenuOpen && (
+                    <button
+                        type="button"
+                        aria-label="Close sidebar"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-sm lg:hidden"
+                    />
+                )}
+
+                {/* Sidebar */}
+                <aside
+                    className={`fixed inset-y-0 left-0 z-[160] flex w-72 shrink-0 flex-col border-r border-white/10 bg-[#0d0f19] p-6 transition-transform duration-300 lg:static lg:z-auto lg:w-64 lg:translate-x-0 ${
+                        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
+                >
                     <a href="/" className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-lg font-bold">
                             SK
@@ -262,8 +278,11 @@ export default function AdminDashboard() {
                                         key={item.label}
                                         type="button"
                                         onClick={() => {
-                                            if (["Overview", "Messages", "Analytics", "Projects"].includes(item.label)) {
+                                            if (
+                                                ["Overview", "Messages", "Analytics", "Projects"].includes(item.label)
+                                            ) {
                                                 setActiveTab(item.label);
+                                                setMobileMenuOpen(false);
                                             }
                                         }}
                                         className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition-colors ${
@@ -296,13 +315,25 @@ export default function AdminDashboard() {
 
                     {/* Header */}
                     <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-[#0d0f19]/80 px-5 py-5 sm:px-8">
-                        <div>
-                            <h1 className="font-heading text-xl font-bold sm:text-2xl">
-                                Dashboard Overview
-                            </h1>
-                            <p className="mt-1 text-xs text-gray-500 sm:text-sm">
-                                Manage your portfolio from one place.
-                            </p>
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setMobileMenuOpen(true)}
+                                aria-label="Open navigation menu"
+                                aria-expanded={mobileMenuOpen}
+                                className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-gray-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+                            >
+                                <Menu size={20} />
+                            </button>
+
+                            <div>
+                                <h1 className="font-heading text-xl font-bold sm:text-2xl">
+                                    Dashboard Overview
+                                </h1>
+                                <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                                    Manage your portfolio from one place.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-3">
