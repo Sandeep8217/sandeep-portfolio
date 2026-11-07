@@ -36,6 +36,7 @@ export default function Projects() {
                 });
 
                 const result: unknown = await response.json();
+                console.log("PUBLIC PROJECTS API RESPONSE:", result);
 
                 if (
                     !response.ok ||
